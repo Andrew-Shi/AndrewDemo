@@ -1,6 +1,9 @@
 package com.shihc.demo.andrewdemo;
 
+import com.shihc.demo.andrewdemo.mvvm.LoginActivity;
+
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -128,6 +131,7 @@ public class MainActivity extends AppCompatActivity
                     case 0://Rx
                         break;
                     case 1://databinding
+                        startActivity(new Intent(MainActivity.this, LoginActivity.class));
                         break;
                     case 2://dagger2
                         break;
@@ -184,7 +188,7 @@ public class MainActivity extends AppCompatActivity
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Toast.makeText(v.getContext(), mValues.get(position), Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(v.getContext(), mValues.get(position), Toast.LENGTH_SHORT).show();
                     onItemClickListener.onItemClick(holder.itemView, position);
                 }
             });
