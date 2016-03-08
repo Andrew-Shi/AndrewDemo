@@ -1,15 +1,27 @@
 package com.shihc.demo.andrewdemo.mvvm;
 
+import com.shihc.demo.andrewdemo.BR;
+import com.shihc.demo.andrewdemo.R;
+import com.shihc.demo.andrewdemo.mvvm.listview.ItemModel;
+
 import android.content.res.Resources;
+import android.databinding.ObservableArrayList;
 import android.databinding.ObservableBoolean;
 import android.databinding.ObservableField;
 import android.databinding.ObservableInt;
+import android.databinding.ObservableList;
 import android.os.AsyncTask;
 import android.view.View;
 
 import java.util.Random;
 
+import me.tatarka.bindingcollectionadapter.ItemView;
+
 public class LoginModel {
+
+
+    public final ObservableList<ItemModel> items = new ObservableArrayList<>();
+    public final ItemView itemView = ItemView.of(BR.user, R.layout.data_binding_item);
 
     public ObservableField<String> numberOfUsersLoggedIn = new ObservableField();
     public ObservableBoolean isExistingUserChecked = new ObservableBoolean();
