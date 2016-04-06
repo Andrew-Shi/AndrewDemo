@@ -20,6 +20,14 @@ android {
     dataBinding {
         enabled = true
     }
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'armeabi', 'armeabi-v7a'
+            universalApk false
+        }
+    }
 }
 
 dependencies {
