@@ -1,9 +1,14 @@
 package com.shihc.demo.andrewdemo;
 
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.shihc.demo.andrewdemo.mvvm.LoginActivity;
+import com.shihc.demo.andrewdemo.view.QQHealthActivity;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -30,6 +35,12 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +69,9 @@ public class MainActivity extends AppCompatActivity
 
         RecyclerView rv = (RecyclerView) findViewById(R.id.recyclerview);
         setupRecyclerView(rv);
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
     @Override
@@ -137,7 +151,8 @@ public class MainActivity extends AppCompatActivity
                         break;
                     case 3://Kotlin
                         break;
-                    case 4:
+                    case 4://高仿qq健康
+                        startActivity(new Intent(MainActivity.this, QQHealthActivity.class));
                         break;
                     case 5:
                         break;
@@ -154,7 +169,48 @@ public class MainActivity extends AppCompatActivity
         list.add("databinding");
         list.add("dagger2");
         list.add("Kotlin");
+        list.add("高仿qq健康");
         return list;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.connect();
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Main Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app URL is correct.
+                Uri.parse("android-app://com.shihc.demo.andrewdemo/http/host/path")
+        );
+        AppIndex.AppIndexApi.start(client, viewAction);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Main Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app URL is correct.
+                Uri.parse("android-app://com.shihc.demo.andrewdemo/http/host/path")
+        );
+        AppIndex.AppIndexApi.end(client, viewAction);
+        client.disconnect();
     }
 
     class HomeAdapter extends RecyclerView.Adapter<HomeAdapter.MyViewHolder> {
@@ -201,12 +257,14 @@ public class MainActivity extends AppCompatActivity
 
         class MyViewHolder extends RecyclerView.ViewHolder {
             TextView tv;
+
             public MyViewHolder(View view) {
                 super(view);
                 tv = (TextView) view.findViewById(android.R.id.text1);
             }
         }
     }
+
     public interface OnItemClickListener {
 
         void onItemClick(View view, int position);
