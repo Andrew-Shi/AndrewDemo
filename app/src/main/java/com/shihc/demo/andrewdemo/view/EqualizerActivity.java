@@ -2,7 +2,6 @@ package com.shihc.demo.andrewdemo.view;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.SparseArray;
 import android.view.View;
 
 import com.shihc.demo.andrewdemo.R;
@@ -26,22 +25,16 @@ public class EqualizerActivity extends AppCompatActivity implements View.OnClick
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn1:
-                equalizerView.setProgress(0, 90);
+                equalizerView.setProgress(new int[]{10, 20, 40, 60, 80});
                 break;
             case R.id.btn2:
-                equalizerView.setProgress(1, 20);
+                equalizerView.setProgress(new int[]{100, 80, 60, 40, 20});
                 break;
             case R.id.btn3:
-                equalizerView.setProgress(2, 20);
+                equalizerView.setProgress(new int[]{20, 40, 80, 50, 30});
                 break;
             case R.id.btn4:
-                SparseArray<Integer> array = new SparseArray<>();
-                array.put(0, 20);
-                array.put(1, 80);
-                array.put(3, 10);
-                array.put(4, 100);
-                array.put(2, 80);
-                equalizerView.setMulProgress(array);
+                equalizerView.setProgress(new int[]{80, 50, 10, 40, 70});
                 break;
         }
     }
@@ -52,13 +45,7 @@ public class EqualizerActivity extends AppCompatActivity implements View.OnClick
         equalizerView.postDelayed(new Runnable() {
             @Override
             public void run() {
-                SparseArray<Integer> array = new SparseArray<>();
-                array.put(0, 20);
-                array.put(1, 80);
-                array.put(3, 10);
-                array.put(4, 100);
-                array.put(2, 80);
-                equalizerView.setMulProgress(array);
+                equalizerView.setProgress(new int[]{10, 20, 40, 60, 80});
             }
         }, 300);
     }

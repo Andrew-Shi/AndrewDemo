@@ -11,8 +11,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.text.TextPaint;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.util.SparseArray;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.Toast;
@@ -35,9 +33,9 @@ public class EqualizerView extends View {
     private Paint mHorizontalLinePaint;//连接频率中间的线条画笔
     private TextPaint mTextPaint;//底部文本画笔
     private float mTextHeight;
-    private Bitmap mExampleDrawable;
+    private Bitmap mThumbDrawable;
 
-    private float animPercent;
+    private float animPercent;//动画过程中间值，用于动画执行过程中坐标的计算
     private float mWidth;
     private float mHeight;
     private ValueAnimator percentAnimator;
@@ -62,7 +60,7 @@ public class EqualizerView extends View {
                 attrs, R.styleable.EqualizerView, defStyle, 0);
         effectCount = a.getInt(R.styleable.EqualizerView_effectCount, 1);
         effectDes = getResources().getStringArray(a.getResourceId(R.styleable.EqualizerView_effectDes, R.array.effectDes));
-        mExampleDrawable = BitmapFactory.decodeResource(getResources(), a.getResourceId(R.styleable.EqualizerView_effectThumb, android.support.design.R.drawable.abc_seekbar_thumb_material));
+        mThumbDrawable = BitmapFactory.decodeResource(getResources(), a.getResourceId(R.styleable.EqualizerView_effectThumb, android.support.design.R.drawable.abc_seekbar_thumb_material));
         a.recycle();
 
         float density = getResources().getDisplayMetrics().density;        // 屏幕密度（像素比例：0.75/1.0/1.5/2.0）
@@ -92,7 +90,6 @@ public class EqualizerView extends View {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 animPercent = (float) animation.getAnimatedValue();
-                Log.d("onAnimationUpdate", "animPercent : " + animPercent);
                 invalidate();
             }
         });
@@ -102,7 +99,6 @@ public class EqualizerView extends View {
         percentAnimator.addListener(new Animator.AnimatorListener() {
             @Override
             public void onAnimationStart(Animator animation) {
-
             }
 
             @Override
@@ -114,15 +110,10 @@ public class EqualizerView extends View {
 
             @Override
             public void onAnimationCancel(Animator animation) {
-                for (EffectPoint effectPoint : effectPoints) {
-                    effectPoint.onAnimationEnd(animPercent);
-                }
-                animPercent = 0f;
             }
 
             @Override
             public void onAnimationRepeat(Animator animation) {
-
             }
         });
     }
@@ -161,14 +152,19 @@ public class EqualizerView extends View {
         super.onDraw(canvas);
         for (int i = 0; i < effectCount; i++) {
             EffectPoint effectPoint = effectPoints[i];
+            //写文字
             canvas.drawText(effectDes[i], effectPoint.x, effectPoint.textY, mTextPaint);
+            //获取滑块的位置
+            float animProgressY = effectPoint.getAnimProgressY(animPercent);
+
             //画底层线条
             mPaint.setColor(mBottomLayerLineColor);
-            canvas.drawLines(new float[]{effectPoint.x, effectPoint.topY, effectPoint.x, effectPoint.bottomY}, mPaint);
+            canvas.drawLines(new float[]{effectPoint.x, effectPoint.topY, effectPoint.x, animProgressY}, mPaint);
+
             //画上层层线条
             mPaint.setColor(mUpperLayerLineColor);
-            float animProgressY = effectPoint.getAnimProgressY(animPercent);
             canvas.drawLines(new float[]{effectPoint.x, animProgressY, effectPoint.x, effectPoint.bottomY}, mPaint);
+
             //画左右连接线条
             if (i == effectCount - 1) {
                 canvas.drawLines(new float[]{effectPoint.x, animProgressY, mWidth, animProgressY}, mHorizontalLinePaint);
@@ -179,55 +175,42 @@ public class EqualizerView extends View {
                 EffectPoint nextEffectPoint = effectPoints[i + 1];
                 canvas.drawLines(new float[]{effectPoint.x, animProgressY, nextEffectPoint.x, nextEffectPoint.getAnimProgressY(animPercent)}, mHorizontalLinePaint);
             }
+
             //画滑动块
-            canvas.drawBitmap(mExampleDrawable, effectPoint.x - mExampleDrawable.getWidth() / 2, animProgressY - mExampleDrawable.getHeight() / 2, mPaint);
+            canvas.drawBitmap(mThumbDrawable, effectPoint.x - mThumbDrawable.getWidth() / 2, animProgressY - mThumbDrawable.getHeight() / 2, mPaint);
         }
     }
 
     /**
-     * 设置单个频率的大小
+     * 设置频率的大小
      *
-     * @param index    第几个频率，范围为[0, effectCount)
-     * @param progress 频率的高低，范围[0, 100]
+     * @param progress 频率的高低，个数必须为 effectCount，范围[0, 100]
      */
-    public void setProgress(int index, int progress) {
-        if (index < 0 || index > effectCount - 1 || progress < 0 || progress > 100) {
-            Toast.makeText(getContext(), "传递的参数错误", Toast.LENGTH_SHORT).show();
+    public void setProgress(int[] progress) {
+        if (progress == null || progress.length != effectCount) {
+            Toast.makeText(getContext(), "传递的数据错误", Toast.LENGTH_SHORT).show();
             return;
         }
-        effectPoints[index].setCurrentProgress(progress);
-        startAnim();
-    }
-
-    /**
-     * 设置多个频率的大小
-     *
-     * @param mulProgress key表示第几个频率，范围为[0, effectCount)
-     *                    value表示频率的高低，范围[0, 100]
-     */
-    public void setMulProgress(SparseArray<Integer> mulProgress) {
-        if (mulProgress == null || mulProgress.size() == 0) {
-            Toast.makeText(getContext(), "传递的数据不能为空", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        for (int i = 0; i < mulProgress.size(); i++) {
-            int index = mulProgress.keyAt(i);
-            int progress = mulProgress.get(index);
-            if (index < 0 || index > effectCount - 1 || progress < 0 || progress > 100) {
+        stopAnim();
+        for (int i = 0; i < effectCount; i++) {
+            int item = progress[i];
+            if (item < 0 || item > 100) {
                 Toast.makeText(getContext(), "传递的参数错误", Toast.LENGTH_SHORT).show();
                 return;
             }
-            effectPoints[index].setCurrentProgress(progress);
+            effectPoints[i].setCurrentProgress(item);
         }
         startAnim();
     }
 
     private void startAnim() {
+        percentAnimator.start();
+    }
+
+    private void stopAnim(){
         if (percentAnimator.isRunning()) {
-            Log.d("EqualizerView", "重新开始动画");
             percentAnimator.cancel();
         }
-        percentAnimator.start();
     }
 
     class EffectPoint {
@@ -243,7 +226,6 @@ public class EqualizerView extends View {
         }
 
         public float getAnimProgressY(float animPercent) {
-            Log.d("EqualizerView", "x : " + x + ",animPercent : " + animPercent);
             return preProgressY + (currentProgressY - preProgressY) * animPercent;
         }
 
@@ -261,8 +243,7 @@ public class EqualizerView extends View {
 
         public void onAnimationEnd(float animPercent) {
             changed = false;
-            preProgressY = getAnimProgressY(animPercent);
-            Log.d("EqualizerView", "动画结束，" + animPercent);
+            currentProgressY = preProgressY = getAnimProgressY(animPercent);
         }
 
         public boolean isChanged() {
