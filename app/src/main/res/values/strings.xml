@@ -9,4 +9,11 @@
 
     <string name="login">login</string>
     <string name="create_user">create_user</string>
+    <array name="effectDes">
+        <item>60HZ</item>
+        <item>230HZ</item>
+        <item>910HZ</item>
+        <item>4KHZ</item>
+        <item>14KHZ</item>
+    </array>
 </resources>

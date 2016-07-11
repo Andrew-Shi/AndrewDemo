@@ -1,0 +1,9 @@
+<resources>
+    <declare-styleable name="EqualizerView">
+        <attr name="effectCount" format="string" />
+        <attr name="effectDes" format="reference" />
+        <attr name="backLineColor" format="color|reference" />
+        <attr name="textSize" format="dimension" />
+        <attr name="effectThumb" format="reference" />
+    </declare-styleable>
+</resources>
