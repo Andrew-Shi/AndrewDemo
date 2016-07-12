@@ -36,6 +36,7 @@ public class EqualizerView extends View {
     private float mTextHeight;
     private Bitmap mThumbDrawable;
     private int min, max; //进度范围大小
+    private float mTextSize = 20;
 
     private float mAnimPercent;//动画过程中间值，用于动画执行过程中坐标的计算
     private float mWidth;
@@ -73,6 +74,7 @@ public class EqualizerView extends View {
         mThumbDrawable = BitmapFactory.decodeResource(getResources(), a.getResourceId(R.styleable.EqualizerView_effectThumb, android.support.design.R.drawable.abc_seekbar_thumb_material));
         min = a.getInt(R.styleable.EqualizerView_min, 0);
         max = a.getInt(R.styleable.EqualizerView_max, 100);
+        mTextSize = a.getDimensionPixelSize(R.styleable.EqualizerView_textSize, 20);
         a.recycle();
 
         float density = getResources().getDisplayMetrics().density;        // 屏幕密度（像素比例：0.75/1.0/1.5/2.0）
@@ -144,18 +146,18 @@ public class EqualizerView extends View {
         mWidth = w;
         mHeight = h;
 
-        mTextPaint.setTextSize(20f / 450f * mWidth);
+        mTextPaint.setTextSize(mTextSize);
         Paint.FontMetrics fontMetrics = mTextPaint.getFontMetrics();
-        mTextHeight = fontMetrics.bottom - fontMetrics.top;
+        mTextHeight = fontMetrics.descent - fontMetrics.ascent;
 
         mOffset = mWidth / (effectCount * 2);
         for (int i = 0; i < effectCount; i++) {
             effectPoints[i] = new EffectPoint();
             effectPoints[i].x = (i * 2 + 1) * mOffset;
             effectPoints[i].topY = paddingTop;
-            effectPoints[i].bottomY = h - paddingBottom - mTextHeight;
+            effectPoints[i].bottomY = h - paddingBottom * 2 - mTextHeight;
             effectPoints[i].textY = h - paddingBottom;
-            effectPoints[i].setProgress(50);
+            effectPoints[i].setProgress((max + min) / 2);
         }
     }
 

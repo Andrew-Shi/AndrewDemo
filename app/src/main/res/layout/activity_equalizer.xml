@@ -16,6 +16,7 @@
         android:background="#ccc"
         android:paddingBottom="15dp"
         android:paddingTop="20dp"
+        app:textSize="16sp"
         app:effectCount="5"
         app:effectDes="@array/effectDes"
         app:effectThumb="@drawable/audioeffect_thumb"
