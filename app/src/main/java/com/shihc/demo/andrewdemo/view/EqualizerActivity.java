@@ -58,12 +58,12 @@ public class EqualizerActivity extends AppCompatActivity implements View.OnClick
     @Override
     protected void onResume() {
         super.onResume();
-        equalizerView.postDelayed(new Runnable() {
+        equalizerView.post(new Runnable() {
             @Override
             public void run() {
                 equalizerView.setProgress(new int[]{-9, -2, 2, 5, 11});
             }
-        }, 300);
+        });
     }
 
     @Override
