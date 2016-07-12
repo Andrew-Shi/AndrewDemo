@@ -65,4 +65,9 @@ public class EqualizerActivity extends AppCompatActivity implements View.OnClick
             }
         }, 300);
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
 }
