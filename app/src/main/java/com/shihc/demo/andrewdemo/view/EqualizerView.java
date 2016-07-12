@@ -11,7 +11,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.text.TextPaint;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
@@ -36,13 +35,16 @@ public class EqualizerView extends View {
     private TextPaint mTextPaint;//底部文本画笔
     private float mTextHeight;
     private Bitmap mThumbDrawable;
+    private int min, max; //进度范围大小
 
-    private float animPercent;//动画过程中间值，用于动画执行过程中坐标的计算
+    private float mAnimPercent;//动画过程中间值，用于动画执行过程中坐标的计算
     private float mWidth;
     private float mHeight;
-    private ValueAnimator percentAnimator;
+    private ValueAnimator mAnimator;
     private float mOffset;
-    private EffectPoint clickEffectPoint;
+    private EffectPoint mClickEffectPoint;
+
+    private OnChangeListener mOnChangeListener;
 
     public EqualizerView(Context context) {
         super(context);
@@ -59,12 +61,18 @@ public class EqualizerView extends View {
         init(attrs, defStyle);
     }
 
+    public void setOnChangeListener(OnChangeListener onChangeListener) {
+        this.mOnChangeListener = onChangeListener;
+    }
+
     private void init(AttributeSet attrs, int defStyle) {
         final TypedArray a = getContext().obtainStyledAttributes(
                 attrs, R.styleable.EqualizerView, defStyle, 0);
         effectCount = a.getInt(R.styleable.EqualizerView_effectCount, 1);
         effectDes = getResources().getStringArray(a.getResourceId(R.styleable.EqualizerView_effectDes, R.array.effectDes));
         mThumbDrawable = BitmapFactory.decodeResource(getResources(), a.getResourceId(R.styleable.EqualizerView_effectThumb, android.support.design.R.drawable.abc_seekbar_thumb_material));
+        min = a.getInt(R.styleable.EqualizerView_min, 0);
+        max = a.getInt(R.styleable.EqualizerView_max, 100);
         a.recycle();
 
         float density = getResources().getDisplayMetrics().density;        // 屏幕密度（像素比例：0.75/1.0/1.5/2.0）
@@ -89,18 +97,18 @@ public class EqualizerView extends View {
     }
 
     private void createAnim() {
-        percentAnimator = ValueAnimator.ofFloat(0, 1);
-        percentAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+        mAnimator = ValueAnimator.ofFloat(0, 1);
+        mAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
-                animPercent = (float) animation.getAnimatedValue();
+                mAnimPercent = (float) animation.getAnimatedValue();
                 invalidate();
             }
         });
 
-        percentAnimator.setInterpolator(new DecelerateInterpolator());
-        percentAnimator.setDuration(500);
-        percentAnimator.addListener(new Animator.AnimatorListener() {
+        mAnimator.setInterpolator(new DecelerateInterpolator());
+        mAnimator.setDuration(500);
+        mAnimator.addListener(new Animator.AnimatorListener() {
             @Override
             public void onAnimationStart(Animator animation) {
             }
@@ -108,7 +116,7 @@ public class EqualizerView extends View {
             @Override
             public void onAnimationEnd(Animator animation) {
                 for (EffectPoint effectPoint : effectPoints) {
-                    effectPoint.onAnimationEnd(animPercent);
+                    effectPoint.onAnimationEnd(mAnimPercent);
                 }
             }
 
@@ -147,7 +155,7 @@ public class EqualizerView extends View {
             effectPoints[i].topY = paddingTop;
             effectPoints[i].bottomY = h - paddingBottom - mTextHeight;
             effectPoints[i].textY = h - paddingBottom;
-            effectPoints[i].setCurrentProgress(50);
+            effectPoints[i].setProgress(50);
         }
     }
 
@@ -159,7 +167,7 @@ public class EqualizerView extends View {
             //写文字
             canvas.drawText(effectDes[i], effectPoint.x, effectPoint.textY, mTextPaint);
             //获取滑块的位置
-            float animProgressY = effectPoint.getAnimProgressY(animPercent);
+            float animProgressY = effectPoint.getAnimProgressY(mAnimPercent);
 
             //画底层线条
             mPaint.setColor(mBottomLayerLineColor);
@@ -177,7 +185,7 @@ public class EqualizerView extends View {
                     canvas.drawLines(new float[]{0, animProgressY, effectPoints[0].x, animProgressY}, mHorizontalLinePaint);
                 }
                 EffectPoint nextEffectPoint = effectPoints[i + 1];
-                canvas.drawLines(new float[]{effectPoint.x, animProgressY, nextEffectPoint.x, nextEffectPoint.getAnimProgressY(animPercent)}, mHorizontalLinePaint);
+                canvas.drawLines(new float[]{effectPoint.x, animProgressY, nextEffectPoint.x, nextEffectPoint.getAnimProgressY(mAnimPercent)}, mHorizontalLinePaint);
             }
 
             //画滑动块
@@ -187,36 +195,50 @@ public class EqualizerView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        animPercent = 1.0f;
+        mAnimPercent = 1.0f;
         switch (event.getAction()){
             case MotionEvent.ACTION_DOWN:
                 for (int i = 0; i < effectCount; i++) {
-                    clickEffectPoint = effectPoints[i];
-                    if (clickEffectPoint.isClicked(event.getX(), event.getY())){
-                        Log.d("EqualizerView", "第" + i + "个音效被点击");
-                        clickEffectPoint.setCurrentProgressY(event.getY());
+                    mClickEffectPoint = effectPoints[i];
+                    if (mClickEffectPoint.isClicked(event.getX(), event.getY())){
+                        if (mOnChangeListener != null){
+                            mOnChangeListener.onProgressBefore();
+                        }
+                        mClickEffectPoint.setProgressY(event.getY(), false);
                         invalidate();
                         return true;
                     }
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
-                if (clickEffectPoint != null){
-                    clickEffectPoint.setCurrentProgressY(event.getY());
+                if (mClickEffectPoint != null){
+                    mClickEffectPoint.setProgressY(event.getY(), false);
                     invalidate();
                 }
                 break;
             case MotionEvent.ACTION_UP:
-                clickEffectPoint = null;
+                mClickEffectPoint.setProgressY(event.getY(), true);
+                mClickEffectPoint = null;
+                if (mOnChangeListener != null){
+                    mOnChangeListener.onProgressChanged(this, getProgress());
+                }
                 break;
         }
         return super.onTouchEvent(event);
     }
 
+    public int[] getProgress() {
+        int[] array = new int[effectCount];
+        int i = 0;
+        for (EffectPoint effectPoint : effectPoints) {
+            array[i++] = effectPoint.getProgress();
+        }
+        return array;
+    }
     /**
      * 设置频率的大小
      *
-     * @param progress 频率的高低，个数必须为 effectCount，范围[0, 100]
+     * @param progress 频率的高低，个数必须为 effectCount，范围[min, max]
      */
     public void setProgress(int[] progress) {
         if (progress == null || progress.length != effectCount) {
@@ -226,22 +248,22 @@ public class EqualizerView extends View {
         stopAnim();
         for (int i = 0; i < effectCount; i++) {
             int item = progress[i];
-            if (item < 0 || item > 100) {
+            if (item < min || item > max) {
                 Toast.makeText(getContext(), "传递的参数错误", Toast.LENGTH_SHORT).show();
                 return;
             }
-            effectPoints[i].setCurrentProgress(item);
+            effectPoints[i].setProgress(item);
         }
         startAnim();
     }
 
     private void startAnim() {
-        percentAnimator.start();
+        mAnimator.start();
     }
 
     private void stopAnim() {
-        if (percentAnimator.isRunning()) {
-            percentAnimator.cancel();
+        if (mAnimator.isRunning()) {
+            mAnimator.cancel();
         }
     }
 
@@ -253,6 +275,7 @@ public class EqualizerView extends View {
         private float currentProgressY = -1;//当前设置的进度的大小的y坐标值
         private float preProgressY = -1;//上一次进度的大小，用于动画的显示
         private boolean changed = true;//currentProgressY是否被改变过，没改变过就不要重绘了
+        private int progress;
 
         public EffectPoint() {
         }
@@ -261,8 +284,9 @@ public class EqualizerView extends View {
             return preProgressY + (currentProgressY - preProgressY) * animPercent;
         }
 
-        public void setCurrentProgress(float currentProgress) {
-            float temp = bottomY - (currentProgress / 100f) * (bottomY - topY);
+        public void setProgress(int progress) {
+            this.progress = progress;
+            float temp = bottomY - ((progress - min) * 1f / (max - min)) * (bottomY - topY);
             if (currentProgressY < 0) {
                 currentProgressY = temp;
                 preProgressY = temp;
@@ -273,8 +297,18 @@ public class EqualizerView extends View {
             changed = true;
         }
 
-        public void setCurrentProgressY(float y) {
+        /**
+         * 手指拖动时设置y坐标
+         * @param y 当前y坐标值
+         * @param end 是否结束滑动
+         */
+        public void setProgressY(float y, boolean end) {
+            if (y < topY) y = topY;
+            if (y > bottomY) y = bottomY;
             currentProgressY = y;
+            if (end){
+                progress = (int) ((bottomY - y) / (bottomY - topY) * (max - min) + min);
+            }
         }
 
         public void onAnimationEnd(float animPercent) {
@@ -292,17 +326,20 @@ public class EqualizerView extends View {
             }
             return false;
         }
+
+        public int getProgress() {
+            return progress;
+        }
     }
 
     //回调函数
     public interface OnChangeListener {
+
         //滑动前
         public void onProgressBefore();
 
         //滑动时
-        public void onProgressChanged(EqualizerView seekBar, int progressLow, int progressHigh);
+        public void onProgressChanged(EqualizerView seekBar, int[] progress);
 
-        //滑动后
-        public void onProgressAfter();
     }
 }
