@@ -11,6 +11,8 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.text.TextPaint;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.Toast;
@@ -39,6 +41,8 @@ public class EqualizerView extends View {
     private float mWidth;
     private float mHeight;
     private ValueAnimator percentAnimator;
+    private float mOffset;
+    private EffectPoint clickEffectPoint;
 
     public EqualizerView(Context context) {
         super(context);
@@ -136,10 +140,10 @@ public class EqualizerView extends View {
         Paint.FontMetrics fontMetrics = mTextPaint.getFontMetrics();
         mTextHeight = fontMetrics.bottom - fontMetrics.top;
 
-        float offset = mWidth / (effectCount * 2);
+        mOffset = mWidth / (effectCount * 2);
         for (int i = 0; i < effectCount; i++) {
             effectPoints[i] = new EffectPoint();
-            effectPoints[i].x = (i * 2 + 1) * offset;
+            effectPoints[i].x = (i * 2 + 1) * mOffset;
             effectPoints[i].topY = paddingTop;
             effectPoints[i].bottomY = h - paddingBottom - mTextHeight;
             effectPoints[i].textY = h - paddingBottom;
@@ -181,6 +185,34 @@ public class EqualizerView extends View {
         }
     }
 
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        animPercent = 1.0f;
+        switch (event.getAction()){
+            case MotionEvent.ACTION_DOWN:
+                for (int i = 0; i < effectCount; i++) {
+                    clickEffectPoint = effectPoints[i];
+                    if (clickEffectPoint.isClicked(event.getX(), event.getY())){
+                        Log.d("EqualizerView", "第" + i + "个音效被点击");
+                        clickEffectPoint.setCurrentProgressY(event.getY());
+                        invalidate();
+                        return true;
+                    }
+                }
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if (clickEffectPoint != null){
+                    clickEffectPoint.setCurrentProgressY(event.getY());
+                    invalidate();
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+                clickEffectPoint = null;
+                break;
+        }
+        return super.onTouchEvent(event);
+    }
+
     /**
      * 设置频率的大小
      *
@@ -207,7 +239,7 @@ public class EqualizerView extends View {
         percentAnimator.start();
     }
 
-    private void stopAnim(){
+    private void stopAnim() {
         if (percentAnimator.isRunning()) {
             percentAnimator.cancel();
         }
@@ -231,7 +263,7 @@ public class EqualizerView extends View {
 
         public void setCurrentProgress(float currentProgress) {
             float temp = bottomY - (currentProgress / 100f) * (bottomY - topY);
-            if (currentProgressY < 0){
+            if (currentProgressY < 0) {
                 currentProgressY = temp;
                 preProgressY = temp;
             } else {
@@ -239,6 +271,10 @@ public class EqualizerView extends View {
                 currentProgressY = temp;
             }
             changed = true;
+        }
+
+        public void setCurrentProgressY(float y) {
+            currentProgressY = y;
         }
 
         public void onAnimationEnd(float animPercent) {
@@ -249,5 +285,24 @@ public class EqualizerView extends View {
         public boolean isChanged() {
             return changed;
         }
+
+        public boolean isClicked(float x, float y) {
+            if (y > topY && y < bottomY && x > this.x - mOffset && x < this.x + mOffset) {
+                return true;
+            }
+            return false;
+        }
+    }
+
+    //回调函数
+    public interface OnChangeListener {
+        //滑动前
+        public void onProgressBefore();
+
+        //滑动时
+        public void onProgressChanged(EqualizerView seekBar, int progressLow, int progressHigh);
+
+        //滑动后
+        public void onProgressAfter();
     }
 }
