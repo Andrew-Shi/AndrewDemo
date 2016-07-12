@@ -285,7 +285,7 @@ public class EqualizerView extends View {
         return super.onTouchEvent(event);
     }
 
-    public int[] getProgress() {
+    private int[] getProgress() {
         int[] array = new int[effectCount];
         int i = 0;
         for (EffectPoint effectPoint : effectPoints) {
