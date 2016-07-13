@@ -11,15 +11,14 @@ public class EqualizerActivity extends AppCompatActivity implements View.OnClick
 
     EqualizerView equalizerView;
 
+    HorizontalChooseView horizontalChooseView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_equalizer);
-        findViewById(R.id.btn1).setOnClickListener(this);
-        findViewById(R.id.btn2).setOnClickListener(this);
-        findViewById(R.id.btn3).setOnClickListener(this);
-        findViewById(R.id.btn4).setOnClickListener(this);
         equalizerView = (EqualizerView) findViewById(R.id.equalizer_view);
+        horizontalChooseView = (HorizontalChooseView) findViewById(R.id.horizontal_choose_view);
         equalizerView.setOnChangeListener(new EqualizerView.OnChangeListener() {
             @Override
             public void onProgressBefore() {
@@ -32,7 +31,36 @@ public class EqualizerActivity extends AppCompatActivity implements View.OnClick
                 for (Integer item : progress){
                     builder.append(item).append(",");
                 }
+                horizontalChooseView.setCurrId(1);
                 Log.d("EqualizerActivity", "自定义完成 ：" + builder.toString());
+            }
+        });
+        horizontalChooseView.setOnChangeListener(new HorizontalChooseView.OnChangeListener() {
+            @Override
+            public void onChanged(int index) {
+                switch (index) {
+                    case 0:
+                        equalizerView.setProgress(new int[]{-9, -2, 2, 5, 11});
+                        break;
+                    case 1:
+                        equalizerView.setProgress(new int[]{12, 8, 5, 0, -7});
+                        break;
+                    case 2:
+                        equalizerView.setProgress(new int[]{-10, 0, 8, 2, -8});
+                        break;
+                    case 3:
+                        equalizerView.setProgress(new int[]{11, 3, -7, -1, 7});
+                        break;
+                    case 4:
+                        equalizerView.setProgress(new int[]{-9, 0, 5, -4, 8});
+                        break;
+                    case 5:
+                        equalizerView.setProgress(new int[]{10, 8, 0, 5, -4});
+                        break;
+                    case 6:
+                        equalizerView.setProgress(new int[]{4, 7, -3, 7, 0});
+                        break;
+                }
             }
         });
     }
@@ -62,6 +90,12 @@ public class EqualizerActivity extends AppCompatActivity implements View.OnClick
             @Override
             public void run() {
                 equalizerView.setProgress(new int[]{-9, -2, 2, 5, 11});
+            }
+        });
+        horizontalChooseView.post(new Runnable() {
+            @Override
+            public void run() {
+                horizontalChooseView.setCurrId(3);
             }
         });
     }
