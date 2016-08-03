@@ -29,6 +29,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.shihc.demo.andrewdemo.mvvm.LoginActivity;
 import com.shihc.demo.andrewdemo.view.EqualizerActivity;
 import com.shihc.demo.andrewdemo.view.QQHealthActivity;
+import com.shihc.demo.andrewdemo.view.WaveformActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -157,6 +158,9 @@ public class MainActivity extends AppCompatActivity
                     case 5://均衡器
                         startActivity(new Intent(MainActivity.this, EqualizerActivity.class));
                         break;
+                    case 6://均衡器
+                        startActivity(new Intent(MainActivity.this, WaveformActivity.class));
+                        break;
                     default:
                         break;
                 }
@@ -172,6 +176,7 @@ public class MainActivity extends AppCompatActivity
         list.add("Kotlin");
         list.add("高仿qq健康");
         list.add("均衡器");
+        list.add("波形动画");
         return list;
     }
 
